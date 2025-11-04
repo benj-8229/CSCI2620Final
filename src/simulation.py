@@ -7,6 +7,7 @@ from boid import Boid
 from hsv import hsv_to_rgb
 from perlin import perlin
 
+easeInOut = lambda x: 16 * x * x * x * x * x if x < .5 else 1 - (-2 * x + 2)**5 / 2
 
 BOID_COLOR = (255, 255, 255)
 BOID_HEAD_COLOR = (245, 93, 227)
@@ -50,7 +51,10 @@ class Simulation:
 
         if self.frame % 3 == 0:
             self.noise = perlin(self.noise_x, self.noise_y, self.x_size, self.y_size)
-            self.wind = self.noise * self.noise
+            self.wind = perlin(-self.noise_x * 5, -self.noise_y * 5, self.x_size, self.y_size, scale=.01, seed=100)
+            # self.wind *= perlin(self.noise_x * 5, self.noise_y * 5, self.x_size, self.y_size, scale=.02, seed=100)
+            self.wind = np.array([[easeInOut(j) for j in row] for row in self.wind])    
+            # self.wind = self.noise * self.noise
 
         # self.wind = perlin(self.noise_x * 2, self.noise_y * 2, self.x_size, self.y_size, scale=.045, octaves=2, persistence=.1, lacunarity=2, seed=100)
         # self.wind *= perlin(self.noise_x * -2, self.noise_y * -2, self.x_size, self.y_size, scale=.045, octaves=2, persistence=.1, lacunarity=2, seed=100)
@@ -157,7 +161,7 @@ class Simulation:
         # clamp lightmap between 0-1 and convert grid to an array in range 0-1
         noise = np.repeat(self.noise[..., None], 3, axis=-1)
         base = np.asarray(grid, dtype=np.float32) / 255.0
-        base = np.clip(base + noise * .65, 0, 1)
+        base = np.clip(base + noise * .75, 0, 1)
 
         # add lightmap to motion blur buffer and then combine that with our base image
         self.accum_buffer = self.accum_buffer * MOTION_BLUR + lightmap * (1.0 - MOTION_BLUR)
@@ -166,13 +170,15 @@ class Simulation:
 
         # convert back to 0-255 image in RGB mode
         out = Image.fromarray((combined * 255).astype(np.uint8), mode="RGB")
+        # out = Image.fromarray((np.repeat(self.wind[..., None], 3, axis=-1) * 255).astype(np.uint8), mode="RGB")
         raster = out.load()
 
         # redraw boid pixels so they're on top layer
         for x, y, color in toplayer:
             raster[x, y] = color
 
-        return out.resize((self.x_size * scale, self.y_size * scale), Image.NEAREST)
+        return out
+        # return out.resize((self.x_size, self.y_size), Image.NEAREST)
 
 
     def add_light(self, lightmap: np.ndarray, x: int, y: int, color: tuple[float, float, float]):

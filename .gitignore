@@ -5,6 +5,7 @@ __pycache__/
 
 # Video outputs
 output/**
+*.mp4
 # C extensions
 *.so
 

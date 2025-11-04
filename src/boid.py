@@ -35,10 +35,10 @@ class Boid:
         others: list['Boid'] = self.sim.boids_around_boid(snapshot, self, FLOCK_DISTANCE)
         others_close: list['Boid'] = self.sim.boids_around_boid(snapshot, self, AVOIDANCE_DISTANCE)
 
-        aw = .5
+        aw = .3
         cw = .4
-        sw = .4
-        ww = .2
+        sw = .5
+        ww = .8
         wind = (self.sim.wind[int(self.y_pos), int(self.x_pos)])
 
         ax, ay = self.alignment(others)

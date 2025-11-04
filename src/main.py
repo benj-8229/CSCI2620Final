@@ -5,13 +5,13 @@ from simulation import Simulation
 from boid import Boid
 from sys import stdout
 
-FPS = 60
-SECONDS = 3
-BOIDS = 50 * 3
+FPS = 45
+SECONDS = 10
+BOIDS = 50 * 2
 BOID_SPEED = 40
-SCALE = 9
+SCALE = 8
 GRID_SIZE = 10
-SIZE = 300
+SIZE = 150
 OUTPUT_PATH = "output/output.mp4"
 
 print(f"Calculating {FPS * SECONDS} frames with a delta of {1.0/FPS}")
