@@ -37,7 +37,7 @@ class Boid:
 
         aw = .3
         cw = .4
-        sw = .5
+        sw = 2.5
         ww = .8
         wind = (self.sim.wind[int(self.y_pos), int(self.x_pos)])
 
@@ -46,8 +46,8 @@ class Boid:
         sx, sy = self.separation(others_close)
         wx, wy = self.deg2vec(wind * 360)
 
-        fx = ax * aw + cx * cw + sx * sw * wx * ww
-        fy = ay * aw + cy * cw + sy * sw * wy * ww
+        fx = ax * aw + cx * cw + sx * sw + wx * ww
+        fy = ay * aw + cy * cw + sy * sw + wy * ww
 
         if fx*fx + fy*fy < 1e-5:
             return
