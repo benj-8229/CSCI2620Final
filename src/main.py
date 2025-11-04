@@ -1,12 +1,12 @@
-import subprocess
+import subprocess, time, sys
 from pathlib import Path
 from random import randrange, random
 from simulation import Simulation
 from boid import Boid
-from sys import stdout
 
 FPS = 45
 SECONDS = 10
+FRAMES = FPS * SECONDS
 BOIDS = 50 * 2
 BOID_SPEED = 40
 SCALE = 8
@@ -28,14 +28,25 @@ for boid in sim.boids:
     #boid.speed = BOID_SPEED * (1.0 / FPS)
 
 
+start_time = time.time()
 for i in range(FPS * SECONDS):
     sim.step()
     # frame = sim.draw(SCALE)
     frame = sim.draw(1)
     frame.convert("RGB").save(frames_dir / f"frame_{i:06d}.png")
-    print(".", end="")
-    stdout.flush()
 
+    # progress info
+    elapsed = time.time() - start_time
+    fps_est = (i + 1) / elapsed if elapsed > 0 else 0
+    bar_len = 30
+    filled_len = int(bar_len * (i + 1) / FRAMES)
+    bar = "█" * filled_len + "-" * (bar_len - filled_len)
+
+    sys.stdout.write(
+            f"\r[{bar}] Frame {i+1}/{FRAMES} {fps_est:5.1f} FPS {elapsed:5.1f}"
+    )
+    sys.stdout.flush()
+print("\n")
 
 print(f"Rendering {FPS * SECONDS} frames...")
 cmd = [
