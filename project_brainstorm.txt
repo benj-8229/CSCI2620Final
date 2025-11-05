@@ -1,8 +1,0 @@
-Lots of the projects on course page look 'academic', want something more artistic and maybe interactive
-Doesn't have to be written in python
-
-Ideas:
-Converting an image into an ascii art rendering
-Procedural images (mandelbrots, fractals)
-Procedural animations (cellular automata, boids, particles)
-Fragment shader ?
