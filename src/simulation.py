@@ -6,6 +6,7 @@ from PIL import Image
 from boid import Boid
 from hsv import hsv_to_rgb
 from perlin import perlin
+from concurrent.futures import ThreadPoolExecutor
 
 easeInOut = lambda x: 16 * x * x * x * x * x if x < .5 else 1 - (-2 * x + 2)**5 / 2
 
@@ -68,11 +69,15 @@ class Simulation:
             boid.sim = self
             snapshot.append(b)
 
-        for boid in self.boids:
-            boid.steer(snapshot)
+        with ThreadPoolExecutor(max_workers=8) as executor:
+            for boid in self.boids:
+                executor.submit(lambda b=boid: (b.steer(snapshot), b.move()))
 
-        for boid in self.boids:
-            boid.move()
+        # for boid in self.boids:
+            # boid.steer(snapshot)
+
+        # for boid in self.boids:
+            # boid.move()
 
     def map_x(self, x):
         if self.wrapping:
@@ -178,7 +183,6 @@ class Simulation:
             raster[x, y] = color
 
         return out
-        # return out.resize((self.x_size, self.y_size), Image.NEAREST)
 
 
     def add_light(self, lightmap: np.ndarray, x: int, y: int, color: tuple[float, float, float]):

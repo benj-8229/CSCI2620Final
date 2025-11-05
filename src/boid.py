@@ -37,7 +37,7 @@ class Boid:
 
         aw = .3
         cw = .4
-        sw = 2.5
+        sw = .8
         ww = .8
         wind = (self.sim.wind[int(self.y_pos), int(self.x_pos)])
 
