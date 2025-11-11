@@ -51,7 +51,7 @@ class Boid:
         wind = (self.sim.wind[int(self.y_pos), int(self.x_pos)])
 
         ax, ay = self.alignment(mask_flock, dirs, distances[self.idx])
-        cx, cy = self.cohesion(others)
+        cx, cy = self.cohesion(others, mask_flock, xs, ys, distances)
         sx, sy = self.separation(others_close)
         wx, wy = self.deg2vec(wind * 360)
 
@@ -75,7 +75,7 @@ class Boid:
 
         return tuple(np.mean(scaled_dirs, axis=0))
 
-    def cohesion(self, others: list['Boid']) -> tuple[float, float]:
+    def cohesion(self, others: list['Boid'], mask, xs, ys, distances) -> tuple[float, float]:
         if not others:
             return (0.0, 0.0)
 
