@@ -33,9 +33,16 @@ class Boid:
         new_dir = Boid.deg2vec(current_dir + deg)
         self.direction = self.normalize_vec(new_dir)
 
-    def steer(self, snapshot: list['Boid']):
-        others: list['Boid'] = self.sim.boids_around_boid(snapshot, self, FLOCK_DISTANCE)
-        others_close: list['Boid'] = self.sim.boids_around_boid(snapshot, self, AVOIDANCE_DISTANCE)
+    def steer(self, snapshot: list['Boid'], xs, ys, distances, dirs):
+        # get a bool mask of all the distances in certain ranges
+        mask_flock = (distances[self.idx] < FLOCK_DISTANCE)
+        mask_avoid = (distances[self.idx] < AVOIDANCE_DISTANCE)
+        # set self.idx to false to not include self
+        mask_flock[self.idx] = False
+        mask_avoid[self.idx] = False
+        # build lists of boids based off masks (legacy)
+        others = [snapshot[j] for j in np.nonzero(mask_flock)[0]]
+        others_close = [snapshot[j] for j in np.nonzero(mask_avoid)[0]]
 
         aw = .3
         cw = .4
@@ -43,7 +50,7 @@ class Boid:
         ww = .8
         wind = (self.sim.wind[int(self.y_pos), int(self.x_pos)])
 
-        ax, ay = self.alignment(others)
+        ax, ay = self.alignment(mask_flock, dirs, distances[self.idx])
         cx, cy = self.cohesion(others)
         sx, sy = self.separation(others_close)
         wx, wy = self.deg2vec(wind * 360)
@@ -56,18 +63,17 @@ class Boid:
 
         self.direction = self.normalize_vec(np.array([fx, fy], dtype=float))
 
-    def alignment(self, others: list['Boid']) -> tuple[float, float]:
-        if not others:
+    # steer towards the average direction of nearby boids
+    def alignment(self, mask, dirs, distances) -> tuple[float, float]:
+        directions = dirs[mask]
+        if directions.size == 0:
             return (0.0, 0.0)
 
-        acc = np.array([0.0, 0.0], dtype=float)
-        for other in others:
-            dist = self.sim.dist_between_boids(self, other)
-            t = dist / FLOCK_DISTANCE
-            magnitude = (1.0 - t) ** 2
-            acc += np.array(other.interpolated_dir, dtype=float) * magnitude
+        t = distances[mask] / FLOCK_DISTANCE
+        mag = (1.0 - t) ** 2
+        scaled_dirs = directions * mag[:, None]
 
-        return (float(acc[0]), float(acc[1]))
+        return tuple(np.mean(scaled_dirs, axis=0))
 
     def cohesion(self, others: list['Boid']) -> tuple[float, float]:
         if not others:

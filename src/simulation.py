@@ -50,10 +50,10 @@ class Simulation:
         self.noise_x += self.delta * 10
         self.noise_y += self.delta * 10
 
-        if self.frame % 3 == 0:
+        if self.frame % 5 == 0:
             self.noise = perlin(self.noise_x, self.noise_y, self.x_size, self.y_size)
+
             self.wind = perlin(-self.noise_x * 5, -self.noise_y * 5, self.x_size, self.y_size, scale=.01, seed=100)
-            # self.wind *= perlin(self.noise_x * 5, self.noise_y * 5, self.x_size, self.y_size, scale=.02, seed=100)
             self.wind = np.array([[easeInOut(j) for j in row] for row in self.wind])    
             # self.wind = self.noise * self.noise
 
@@ -67,16 +67,30 @@ class Simulation:
 
         xs = np.array([b.x_pos for b in self.boids], dtype=float)
         ys = np.array([b.y_pos for b in self.boids], dtype=float)
+        positions = np.column_stack((xs, ys))  # shape (n, 2)
+        distances = self.pairwise_distances(positions)
+
         dirs = np.array([b.interpolated_dir for b in self.boids])
 
-        with ThreadPoolExecutor(max_workers=8) as executor:
-            for boid in self.boids:
-                executor.submit(lambda b=boid: (b.steer(snapshot), b.move()))
+        # with ThreadPoolExecutor(max_workers=8) as executor:
+        #     for boid in self.boids:
+        #         executor.submit(lambda b=boid: (b.steer(snapshot, distances), b.move()))
 
-        # for boid in self.boids:
-        #     boid.steer(self.boids)
-        # for boid in self.boids:
-        #     boid.move()
+        for boid in self.boids:
+            boid.steer(snapshot, xs, ys, distances, dirs)
+        for boid in self.boids:
+            boid.move()
+
+    def pairwise_distances(self, positions):
+        delta = positions[:, np.newaxis, :] - positions[np.newaxis, :, :]  # shape (n, n, 2)
+
+        if self.wrapping:
+            # Wrap differences into [-W/2, +W/2] and [-H/2, +H/2]
+            delta[..., 0] = (delta[..., 0] + self.x_size/2) % self.x_size - self.x_size/2
+            delta[..., 1] = (delta[..., 1] + self.y_size/2) % self.y_size - self.y_size/2
+
+        dist_sq = np.einsum("ijk,ijk->ij", delta, delta)       # squared distances
+        return np.sqrt(dist_sq)
 
     def map_x(self, x):
         if self.wrapping:
@@ -119,7 +133,6 @@ class Simulation:
 
         return math.sqrt(dx**2 + dy**2)
 
-
     def dx_between_boids(self, a: Boid, b: Boid) -> float:
         dx = b.x_pos - a.x_pos
         if not self.wrapping:
@@ -139,7 +152,7 @@ class Simulation:
         if dy < -half: dy += self.y_size
         return dy
 
-    def draw(self, scale: int = 1) -> Image.Image:
+    def draw(self) -> Image.Image:
         grid = self.grid.copy()
         raster: Any = grid.load()
 
