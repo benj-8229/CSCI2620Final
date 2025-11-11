@@ -57,10 +57,6 @@ class Simulation:
             self.wind = np.array([[easeInOut(j) for j in row] for row in self.wind])    
             # self.wind = self.noise * self.noise
 
-        # self.wind = perlin(self.noise_x * 2, self.noise_y * 2, self.x_size, self.y_size, scale=.045, octaves=2, persistence=.1, lacunarity=2, seed=100)
-        # self.wind *= perlin(self.noise_x * -2, self.noise_y * -2, self.x_size, self.y_size, scale=.045, octaves=2, persistence=.1, lacunarity=2, seed=100)
-
-        # create a snapshot without the circular reference to sim
         snapshot = []
         for boid in self.boids:
             boid.sim = None
@@ -69,15 +65,18 @@ class Simulation:
             boid.sim = self
             snapshot.append(b)
 
+        xs = np.array([b.x_pos for b in self.boids], dtype=float)
+        ys = np.array([b.y_pos for b in self.boids], dtype=float)
+        dirs = np.array([b.interpolated_dir for b in self.boids])
+
         with ThreadPoolExecutor(max_workers=8) as executor:
             for boid in self.boids:
                 executor.submit(lambda b=boid: (b.steer(snapshot), b.move()))
 
         # for boid in self.boids:
-            # boid.steer(snapshot)
-
+        #     boid.steer(self.boids)
         # for boid in self.boids:
-            # boid.move()
+        #     boid.move()
 
     def map_x(self, x):
         if self.wrapping:

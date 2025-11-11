@@ -15,6 +15,8 @@ class Boid:
         self.direction = np.array([0.0, 0.0], dtype=float)
         self.interpolated_dir = np.array([0.0, 0.0], dtype=float)
 
+        self.idx = -1
+
     def move(self):
         self.interpolated_dir = self.lerp_vec(self.interpolated_dir, self.direction, 3 * self.sim.delta)
         self.interpolated_dir = self.normalize_vec(self.interpolated_dir)

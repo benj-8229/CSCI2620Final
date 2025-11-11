@@ -1,8 +1,19 @@
-Lots of the projects on course page look 'academic', want something more artistic and maybe interactive
-Doesn't have to be written in python
+Get boids performant enough to render live to a web page
+Need to have high enough FPS to render at least 60 FPS, after dealing with overhead
 
-Ideas:
-Converting an image into an ascii art rendering
-Procedural images (mandelbrots, fractals)
-Procedural animations (cellular automata, boids, particles)
-Fragment shader ?
+Currently at 16-18 fps on a 150x150 grid with 50 boids. Should be pushing far higher and faster than this.
+
+Order of priority for performance benefits
+1. Vectorize Boid operations
+	1.a. Distance calculations take by far the longest, n^2 sqrt calculations per frame. Distance compute accounts for ~83% of runtime
+	1.b. Calculations like "average velocity", "average heading", etc would be easy to vectorize and give a modest speedup
+2. Once calculations are using vectors rather than Boid objects, even if not fully vectorized, Numba JIT would likely give a massive speedup
+3. Optimize perlin code. Either a separate thread that sends the perlin noise to some shared resource, or rewrite in NP and use Numba decorators
+3. Writing certain modules in C or using cPython could provide further marginal benefits
+
+Roadmap:
+1. Completely remove deep copy and instead pass arrays of positions, directions, and indexes to boids. This sets framework for:
+2. Vectorize distance calculation. Avoiding overhead from looping and inefficient cache access should be a massive boost
+3. Vectorize other calculations. The speedup will be mild because these operations are already fast, but by vectorizing everything I can:
+4. Implement Numba. Numba decorators do JIT compilation for operations with NP arrays, which could unironically run 1000x faster
+5. Once performance is sufficient at a reasonable simulation scale, I can look into sending the frames over websocket to a local HTML page
