@@ -1,18 +1,16 @@
 import subprocess, time, sys
 from pathlib import Path
-from random import randrange, random
 from simulation import Simulation
-from boid import Boid
 from concurrent.futures import ThreadPoolExecutor
 from threading import Lock
 
-FPS = 45
-SECONDS = 25
+FPS = 60
+SECONDS = 10
 FRAMES = FPS * SECONDS
 BOIDS = 50
 BOID_SPEED = 40
 SCALE = 8
-GRID_SIZE = 10
+GRID_SIZE = 13
 SIZE = 125
 OUTPUT_PATH = "output/output.mp4"
 
@@ -26,16 +24,11 @@ frames_dir.mkdir(parents=True, exist_ok=True)
 
 # Initialize sim and boids
 sim = Simulation(SIZE, SIZE, (1.0 / FPS), wrapping=True)
-sim.boids = [Boid(randrange(0, SIZE - 1), randrange(0, SIZE - 1), 1, sim) for _ in range(BOIDS)]
-for ind, boid in enumerate(sim.boids):
-    boid.direction = Boid.deg2vec(randrange(0, 360))
-    boid.interpolated_dir = boid.direction
-    boid.speed = (BOID_SPEED + (BOID_SPEED * 2/3) * random()) * (1.0 / FPS)
-    boid.idx = ind
+sim.initialize_boids(BOIDS, BOID_SPEED)
 
 
 # Set up thread pool and callback function for frame renderers
-executor = ThreadPoolExecutor(max_workers=8)
+executor = ThreadPoolExecutor(max_workers=32)
 completed = 0
 start_time = time.time()
 lock = Lock()
@@ -47,7 +40,6 @@ def draw_callback(_):
 
 for i in range(FRAMES):
     sim.step()
-    # frame = sim.draw(SCALE)
     frame = sim.draw().convert("RGB")
 
     job = executor.submit(
@@ -55,8 +47,7 @@ for i in range(FRAMES):
     )
     job.add_done_callback(draw_callback)
 
-    # frame.save(frames_dir / f"frame_{i:06d}.png")
-    # completed += 1
+    completed += 1
 
     # progress info
     elapsed = time.time() - start_time
